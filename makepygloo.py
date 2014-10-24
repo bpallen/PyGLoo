@@ -14,18 +14,14 @@
 # @author Ben Allen
 #
 
-#
-# WARNING: using lxml or html5lib with bs4 can break things
-#
-
-import os
+import os, bs4
 from bs4 import BeautifulSoup
 
 # main version number
 version = '0.0.0'
 
 # parse the api specification
-soup = BeautifulSoup(open('./api/gl.xml'))
+soup = BeautifulSoup(open('./api/gl.xml'), features='xml')
 
 # open output file
 out = open('./pygloo.py', 'w')
