@@ -14,6 +14,10 @@
 # @author Ben Allen
 #
 
+#
+# WARNING: using lxml or html5lib with bs4 can break things
+#
+
 import os
 from bs4 import BeautifulSoup
 
