@@ -1,6 +1,6 @@
 #!/bin/env python
 #
-# Script to make the pure python runtime GL function-loader.
+# Script to make PyGLoo, the pure python runtime GL function-loader.
 # Interaction with ctypes is necessary to use loaded functions.
 # Currently for Windows and Linux.
 #
@@ -17,8 +17,13 @@
 import os
 from bs4 import BeautifulSoup
 
+# main version number
+version = '0.0.0'
+
+# parse the api specification
 soup = BeautifulSoup(open('./api/gl.xml'))
 
+# open output file
 out = open('./pygloo.py', 'w')
 
 # generic part
@@ -40,6 +45,8 @@ header = '''
 import os
 import platform
 import ctypes
+
+__version__ = ''' + repr(version) + '''
 
 # class to contain the loaded function pointers
 class Context(object):
