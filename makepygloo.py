@@ -55,7 +55,8 @@ class Context(object):
 
 print 'PyGLoo: initializing GL library...'
 
-# function for making functions
+# function for making function types
+FUNCTYPE = None
 if os.name == 'nt':
 	FUNCTYPE = ctypes.WINFUNCTYPE
 	print 'PyGLoo: using stdcall on win32'
@@ -67,8 +68,11 @@ else:
 	print 'PyGLoo: Warning: unknown OS, guessing cdecl'
 # }
 
-# function for making pointers
+# function for making pointer types
 POINTER = ctypes.POINTER
+
+# function for making pointers to objects
+pointer = ctypes.pointer
 
 # load the GL dll and function-loading-function
 _libgl = None
@@ -88,10 +92,6 @@ else:
 # }
 _getProcAddress.restype = FUNCTYPE(None)
 _getProcAddress.argtypes = (ctypes.c_char_p,)
-
-def _wrapGetProcAddress(name):
-	return _getProcAddress(ctypes.create_string_buffer(str(name)))
-# }
 
 print 'PyGLoo: initialized GL library'
 
@@ -183,9 +183,9 @@ print 'PyGLoo: initialized enum definitions'
 
 # write the functions proper
 out.write('''
-# function definitions
+# API entry points
 def init():
-	print 'PyGLoo: initializing function definitions...'
+	print 'PyGLoo: initializing API entry points...'
 	gl = Context()
 	
 ''')
@@ -228,11 +228,11 @@ for command in soup.registry.commands.find_all('command'):
 		# }
 		atypes.append(at)
 	# }
-	# fix bad tuples for no-args
 	# write the function
-	out.write('''\tgl.{name} = _wrapGetProcAddress('{name}')\n'''.format(name=name))
+	out.write('''\tgl.{name} = _getProcAddress('{name}')\n'''.format(name=name))
 	out.write('''\tgl.{name}.restype = {rtype}\n'''.format(name=name, rtype=rtype))
 	if len(atypes) == 0:
+		# fix bad tuples for no-args
 		out.write('''\tgl.{name}.argtypes = ()\n'''.format(name=name))
 	else:
 		out.write('''\tgl.{name}.argtypes = ({atypes},)\n'''.format(name=name, atypes = ', '.join(atypes)))
@@ -240,7 +240,7 @@ for command in soup.registry.commands.find_all('command'):
 # }
 out.write('''
 	
-	print 'PyGLoo: initialized function definitions'
+	print 'PyGLoo: initialized API entry points'
 	return gl
 # }
 
