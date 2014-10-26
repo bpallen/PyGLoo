@@ -183,6 +183,20 @@ def c_array(c_type, data):
 	return (c_type * len(data))(*data)
 # }
 
+class GLError(Exception):
+	def __init__(self, msg):
+		Exception.__init__(self, msg)
+	# }
+# }
+
+def _errcheck(result, func, args):
+	err = func.gl.glGetError()
+	if err != 0:
+		raise GLError('GL error {err} after call to function {func}; args: {args}'.format(err=err, func=func.__name__, args=repr(args)))
+	# }
+	return result
+# }
+
 print 'PyGLoo: initialized type system'
 '''
 
@@ -255,6 +269,12 @@ for command in soup.registry.commands.find_all('command'):
 	# }
 	# write the function
 	out.write('''\tgl.{name} = _getProcAddress('{name}')\n'''.format(name=name))
+	out.write('''\tgl.{name}.gl = gl\n'''.format(name=name))
+	out.write('''\tgl.{name}.__name__ = '{name}'\n'''.format(name=name))
+	if name != 'glGetError':
+		# avoid infinite recursion
+		out.write('''\tgl.{name}.errcheck = _errcheck\n'''.format(name=name))
+	# }
 	out.write('''\tgl.{name}.restype = {rtype}\n'''.format(name=name, rtype=rtype))
 	if len(atypes) == 0:
 		# fix bad tuples for no-args
