@@ -1,6 +1,10 @@
 #!/bin/env python
 #
-# Script to make PyGLoo, the pure python runtime GL function-loader.
+# PyGLoo
+#
+# https://github.com/benos-9k/PyGLoo
+#
+# Script to make PyGLoo, the pure python runtime GL function loader.
 # Interaction with ctypes is necessary to use loaded functions.
 # Currently for Windows and Linux.
 #
@@ -30,6 +34,8 @@ out = open('./pygloo.py', 'w')
 header = '''
 #
 # PyGLoo
+#
+# https://github.com/benos-9k/PyGLoo
 #
 # Python GL runtime function loader
 # Interaction with ctypes is necessary to use loaded functions.
