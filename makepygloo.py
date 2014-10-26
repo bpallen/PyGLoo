@@ -62,48 +62,61 @@ class Context(object):
 print 'PyGLoo: initializing GL library...'
 
 # function for making function types
-FUNCTYPE = None
+APIFUNCTYPE = None
 if os.name == 'nt':
-	FUNCTYPE = ctypes.WINFUNCTYPE
+	APIFUNCTYPE = ctypes.WINFUNCTYPE
 	print 'PyGLoo: using stdcall on win32'
 elif os.name == 'posix':
-	FUNCTYPE = ctypes.CFUNCTYPE
+	APIFUNCTYPE = ctypes.CFUNCTYPE
 	print 'PyGLoo: using cdecl on posix'
 else:
-	FUNCTYPE = ctypes.CFUNCTYPE
+	APIFUNCTYPE = ctypes.CFUNCTYPE
 	print 'PyGLoo: Warning: unknown OS, guessing cdecl'
 # }
 
 # function for making pointer types
 POINTER = ctypes.POINTER
 
-# function for making pointers to objects
-pointer = ctypes.pointer
-
 # load the GL dll and function-loading-function
 _libgl = None
-_getProcAddress = None
+_getProcAddressImpl = None
 if os.name == 'nt':
 	print 'PyGLoo: loading opengl32.dll on win32'
 	_libgl = ctypes.windll.LoadLibrary('opengl32')
-	_getProcAddress = _libgl.wglGetProcAddress
+	_getProcAddressImpl = _libgl.wglGetProcAddress
 elif os.name == 'posix':
 	print 'PyGLoo: loading libGL.so on posix'
 	_libgl = ctypes.cdll.LoadLibrary('libGL.so')
-	_getProcAddress = _libgl.glXGetProcAddress
+	_getProcAddressImpl = _libgl.glXGetProcAddress
 else:
 	print 'PyGLoo: Warning: unknown OS, guessing libGL.so'
 	_libgl = ctypes.cdll.LoadLibrary('libGL.so')
-	_getProcAddress = _libgl.glXGetProcAddress
+	_getProcAddressImpl = _libgl.glXGetProcAddress
 # }
-_getProcAddress.restype = FUNCTYPE(None)
-_getProcAddress.argtypes = (ctypes.c_char_p,)
+_getProcAddressImpl.restype = APIFUNCTYPE(None)
+_getProcAddressImpl.argtypes = (ctypes.c_char_p,)
+
+def _getProcAddress(name):
+	'Wrapper for (wgl/glX)GetProcAddress that searches directly in the DLL if needed'
+	f = _getProcAddressImpl(name)
+	if not f:
+		# entry point not found, this is typical of GL 1.x functions on Windows
+		try:
+			f = _libgl.__getattr__(name)
+		except AttributeError:
+			# not here either
+			pass
+		# }
+	# }
+	return f
+# }
 
 print 'PyGLoo: initialized GL library'
 
 print 'PyGLoo: initializing type system...'
 
 # mappings for fixed bitwidth integral types
+# only really needed for defining GLintptr
 _int_types = [ctypes.c_byte, ctypes.c_short, ctypes.c_int, ctypes.c_long, ctypes.c_longlong]
 _uint_types = [ctypes.c_ubyte, ctypes.c_ushort, ctypes.c_uint, ctypes.c_ulong, ctypes.c_ulonglong]
 _ints_by_size = dict({(ctypes.sizeof(T), T) for T in _int_types})
@@ -155,14 +168,20 @@ GLsync = ctypes.c_void_p
 # struct _cl_event
 
 # callbacks
-GLDEBUGPROC = FUNCTYPE(GLvoid, GLenum, GLenum, GLuint, GLenum, GLsizei, ctypes.POINTER(GLchar), ctypes.c_void_p)
+GLDEBUGPROC = APIFUNCTYPE(GLvoid, GLenum, GLenum, GLuint, GLenum, GLsizei, ctypes.POINTER(GLchar), ctypes.c_void_p)
 GLDEBUGPROCARB = GLDEBUGPROC
 GLDEBUGPROCKHR = GLDEBUGPROC
 
 # vendor extensions
-GLDEBUGPROCAMD = FUNCTYPE(GLvoid, GLuint, GLenum, GLenum, GLsizei, ctypes.POINTER(GLchar), ctypes.c_void_p)
+GLDEBUGPROCAMD = APIFUNCTYPE(GLvoid, GLuint, GLenum, GLenum, GLsizei, ctypes.POINTER(GLchar), ctypes.c_void_p)
 GLhalfNV = GLushort
 GLvdpauSurfaceNV = GLintptr
+
+def c_array(c_type, data):
+	'Helper function for making and populating ctypes arrays'
+	data = list(data)
+	return (c_type * len(data))(*data)
+# }
 
 print 'PyGLoo: initialized type system'
 '''
@@ -245,8 +264,11 @@ for command in soup.registry.commands.find_all('command'):
 	# }
 # }
 out.write('''
-	
 	print 'PyGLoo: initialized API entry points'
+''')
+
+# return the context object to user
+out.write('''
 	return gl
 # }
 
