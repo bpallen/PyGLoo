@@ -56,7 +56,9 @@ __version__ = ''' + repr(version) + '''
 
 # class to contain the loaded function pointers
 class Context(object):
-	pass
+	def __init__(self):
+		self._begin = False
+	# }
 # }
 
 print 'PyGLoo: initializing GL library...'
@@ -190,7 +192,16 @@ class GLError(Exception):
 # }
 
 def _errcheck(result, func, args):
-	err = func.gl.glGetError()
+	gl = func.gl
+	# calling glGetError() between glBegin() and glEnd() is forbidden
+	if func.__name__ == 'glEnd':
+		gl._begin = False
+	if func.__name__ == 'glBegin':
+		gl._begin = True
+	if gl._begin:
+		return result
+	# }
+	err = gl.glGetError()
 	if err != 0:
 		raise GLError('GL error {err} after call to function {func}; args: {args}'.format(err=err, func=func.__name__, args=repr(args)))
 	# }
