@@ -6,7 +6,7 @@ Pure Python runtime OpenGL function loader / API wrapper
 Basic Usage
 -----------
 
-Get an OpenGL context (Maya users: you already have one). `import pygloo`. Call `pygloo.init()`, which returns an object that contains the loaded OpenGL function pointers (hold on to this!). OpenGL enums / macro constants are avaliable as e.g. `pygloo.GL_VERSION`. Ideally, `init()` should only be called once per context, but nothing should break if it is called multiple times. The functions returned by `init()` _must only_ be used on the context that was active when it was called. `glGetError()` is called automagically after every other OpenGL function; if it signals an error a Python exception is raised.
+Get an OpenGL context (Maya users: you already have one). `import pygloo`. Call `pygloo.init()`, which returns an object that contains the loaded OpenGL function pointers (hold on to this!). OpenGL enums / macro constants are avaliable as e.g. `pygloo.GL_VERSION`. Ideally, `init()` should only be called once per context, but nothing should break if it is called multiple times (indeed, in Maya it is approximately impossible to avoid this). The functions returned by `init()` _must only_ be used on the context that was active when it was called. `glGetError()` is called automagically after every other OpenGL function; if it signals an error a Python exception is raised.
 
 Building
 --------
@@ -30,29 +30,35 @@ Currently for Windows and Linux. Designed to circumvent Maya being shit.
 
 Title: PyGLoo (Python + GLEW, but unrelated to GLEW itself)
 
-Potential Use in Maya
+Use in Maya
 ---------------------
 
-Disclaimer: As I have been having trouble getting anything to draw with OpenGL in Maya on Windows (although I _can_ load the functions and call them in the script editor), I haven't really been able to test this.
-
-The draw method of a locator node subclass that draws a single line using PyGLoo might look something like this:
+A locator node subclass that draws a single line using PyGLoo might look something like this:
 
 ```python
+import maya.OpenMayaMPx as OpenMayaMPx
+
 import pygloo
 from pygloo import *
 
 gl = pygloo.init()
 
-def draw(self, view, path, style, status): 
+class MyNode(OpenMayaMPx.MPxLocatorNode):
+	def __init__(self):
+		OpenMayaMPx.MPxLocatorNode.__init__(self)
 	
-	view.beginGL() 
-	
-	gl.glBegin(GL_LINES)
-	gl.glVertex3f(0.0, -0.5, 0.0)
-	gl.glVertex3f(0.0, 0.5, 0.0)
-	gl.glEnd()
-	
-	view.endGL()
+	def draw(self, view, path, style, status): 
+		
+		view.beginGL() 
+		
+		gl.glBegin(GL_LINES)
+		gl.glVertex3f(0.0, -0.5, 0.0)
+		gl.glVertex3f(0.0, 0.5, 0.0)
+		gl.glEnd()
+		
+		view.endGL()
 ```
+
+Remember to switch to the legacy viewport.
 
 
