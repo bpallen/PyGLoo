@@ -6,7 +6,12 @@ Pure Python runtime OpenGL function loader / API wrapper
 Basic Usage
 -----------
 
-Get an OpenGL context (Maya users: you already have one). `import pygloo`. Call `pygloo.init()`, which returns an object that contains the loaded OpenGL function pointers (hold on to this!). OpenGL enums / macro constants are avaliable as e.g. `pygloo.GL_VERSION`. Ideally, `init()` should only be called once per context, but nothing should break if it is called multiple times (indeed, in Maya it is approximately impossible to avoid this). The functions returned by `init()` _must only_ be used on the context that was active when it was called. `glGetError()` is called automagically after every other OpenGL function; if it signals an error a Python exception is raised.
+Get an OpenGL context (Maya users: you already have one). `import pygloo`. Call `pygloo.init()`, which returns an object that contains the loaded OpenGL function pointers (hold on to this!). OpenGL enums / macro constants are avaliable as e.g. `pygloo.GL_VERSION`. Ideally, `init()` should only be called once per context, but nothing should break if it is called multiple times (indeed, in Maya it is approximately impossible to avoid this). The functions returned by `init()` _must only_ be used on the context that was active when it was called. Any call to `glBegin()` must be paired with a call to `glEnd()` from the _same_ set of functions.
+
+Error Handling
+--------------
+
+`glGetError()` is called automagically after (nearly) every other OpenGL function; if it signals an error a Python exception is raised. This does _not_ happen between the execution of `glBegin()` and `glEnd()` as calling `glGetError()` is forbidden in this case. Any errors from such a block will be reported at the execution of `glEnd()`.
 
 Building
 --------
