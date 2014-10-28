@@ -22,7 +22,7 @@ import os, bs4
 from bs4 import BeautifulSoup
 
 # main version number
-version = '0.0.0'
+version = '0.1.0'
 
 # parse the api specification
 soup = BeautifulSoup(open('./api/gl.xml'), features='xml')

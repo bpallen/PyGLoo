@@ -19,7 +19,7 @@ import os
 import platform
 import ctypes
 
-__version__ = '0.0.0'
+__version__ = '0.1.0'
 
 # class to contain the loaded function pointers
 class Context(object):
